@@ -240,7 +240,6 @@
             z-index: 999;
         }
 
-        /* Estilos para el confeti */
         .confetti {
             position: fixed;
             width: 10px;
@@ -340,50 +339,37 @@
         const successSound = document.getElementById('successSound');
         const applauseSound = document.getElementById('applauseSound');
 
-        // Inicializar el sintetizador de voz
-        const synth = window.speechSynthesis;
-        let voices = [];
-
-        function loadVoices() {
-            voices = synth.getVoices();
-        }
-
-        // Cargar voces cuando estén disponibles
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = loadVoices;
+        // === FUNCIONES SEGURAS DE SÍNTESIS DE VOZ ===
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) return;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'es-ES';
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            window.speechSynthesis.speak(utterance);
         }
 
         function speakWelcome() {
-            const utterance = new SpeechSynthesisUtterance("Juego de Memoria - Banderas de Suramérica. ¡Encuentra todos los pares de banderas!");
-            
-            // Seleccionar una voz en español si está disponible
-            const spanishVoice = voices.find(voice => voice.lang.includes('es'));
-            if (spanishVoice) {
-                utterance.voice = spanishVoice;
-            }
-            
-            utterance.rate = 0.9; // Velocidad del habla
-            utterance.pitch = 1; // Tono
-            utterance.volume = 1; // Volumen
-            
-            synth.speak(utterance);
+            speakText("Juego de Memoria - Banderas de Suramérica. ¡Encuentra todos los pares de banderas!");
         }
 
+        function speakCountryName(countryName) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            speakText(countryName);
+        }
+
+        // === LÓGICA DEL JUEGO ===
         function startGame() {
-            // Ocultar pantalla de bienvenida
             document.getElementById('welcomeScreen').style.display = 'none';
-            
-            // Mostrar el juego
             document.getElementById('gameInfo').style.display = 'flex';
             document.getElementById('gameContainer').style.display = 'block';
-            
-            // Iniciar el juego
             initGame();
         }
 
         function createConfetti() {
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#800080'];
-            
             for (let i = 0; i < 100; i++) {
                 setTimeout(() => {
                     const confetti = document.createElement('div');
@@ -394,11 +380,7 @@
                     confetti.style.width = (Math.random() * 10 + 5) + 'px';
                     confetti.style.height = (Math.random() * 10 + 5) + 'px';
                     document.body.appendChild(confetti);
-                    
-                    // Eliminar el confeti después de la animación
-                    setTimeout(() => {
-                        confetti.remove();
-                    }, 5000);
+                    setTimeout(() => confetti.remove(), 5000);
                 }, i * 50);
             }
         }
@@ -406,50 +388,38 @@
         function initGame() {
             const gameBoard = document.getElementById('gameBoard');
             gameBoard.innerHTML = '';
-            
-            // Crear pares de cartas
             cards = [...countries, ...countries];
             cards.sort(() => Math.random() - 0.5);
-            
             cards.forEach((country, index) => {
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.dataset.index = index;
                 card.dataset.country = country.name;
-                
                 card.innerHTML = `
                     <div class="card-face card-front">?</div>
                     <div class="card-face card-back">
                         <img src="${country.flag}" alt="${country.name}">
                     </div>
                 `;
-                
                 card.addEventListener('click', flipCard);
                 gameBoard.appendChild(card);
             });
-            
             resetStats();
             startTimer();
         }
 
         function flipCard() {
             if (isProcessing) return;
-            
             const card = this;
             if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
-            
             card.classList.add('flipped');
             flippedCards.push(card);
-            
             if (flippedCards.length === 2) {
                 isProcessing = true;
                 moves++;
                 updateMoves();
-                
                 const [card1, card2] = flippedCards;
-                
                 if (card1.dataset.country === card2.dataset.country) {
-                    // Match!
                     setTimeout(() => {
                         card1.classList.add('matched');
                         card2.classList.add('matched');
@@ -458,16 +428,13 @@
                         playSuccessSound();
                         showCelebration(card1.dataset.country);
                         speakCountryName(card1.dataset.country);
-                        
                         if (matchedPairs === countries.length) {
                             endGame();
                         }
-                        
                         flippedCards = [];
                         isProcessing = false;
                     }, 600);
                 } else {
-                    // No match
                     setTimeout(() => {
                         card1.classList.remove('flipped');
                         card2.classList.remove('flipped');
@@ -485,14 +452,9 @@
 
         function showCelebration(countryName) {
             const celebration = document.getElementById('celebration');
-            const pairName = document.getElementById('pairName');
-            
-            pairName.textContent = `¡Has encontrado el par de ${countryName}!`;
+            document.getElementById('pairName').textContent = `¡Has encontrado el par de ${countryName}!`;
             celebration.style.display = 'block';
-            
-            setTimeout(() => {
-                celebration.style.display = 'none';
-            }, 2000);
+            setTimeout(() => { celebration.style.display = 'none'; }, 2000);
         }
 
         function resetGame() {
@@ -535,40 +497,14 @@
             clearInterval(timerInterval);
             const minutes = Math.floor(timer / 60);
             const seconds = timer % 60;
-            
-            // Reproducir aplausos
             applauseSound.currentTime = 0;
             applauseSound.play().catch(e => console.log('Audio play failed:', e));
-            
-            // Crear confeti
             createConfetti();
-            
-            // Mostrar mensaje de victoria
             setTimeout(() => {
                 alert(`¡Felicidades! Completaste el juego en ${moves} movimientos y ${minutes}:${seconds.toString().padStart(2, '0')}`);
             }, 500);
         }
 
-        function speakCountryName(countryName) {
-            // Cancelar cualquier speech en curso
-            synth.cancel();
-            
-            const utterance = new SpeechSynthesisUtterance(countryName);
-            
-            // Seleccionar una voz en español si está disponible
-            const spanishVoice = voices.find(voice => voice.lang.includes('es'));
-            if (spanishVoice) {
-                utterance.voice = spanishVoice;
-            }
-            
-            utterance.rate = 0.9; // Velocidad del habla
-            utterance.pitch = 1; // Tono
-            utterance.volume = 1; // Volumen
-            
-            synth.speak(utterance);
-        }
-
-        // Iniciar el juego - mostrar pantalla de bienvenida y hablar
         window.onload = function() {
             speakWelcome();
         };
