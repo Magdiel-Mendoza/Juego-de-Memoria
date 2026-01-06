@@ -1,16 +1,28 @@
 {
-  "name": "Juego de Memoria",
-  "short_name": "Banderas de Suramérica",
+  "name": "Memoria Banderas Sudamérica",
+  "short_name": "Memoria SA",
   "start_url": "/",
-  "display": "standalone",
-  "background_color": "#3e4a82",
-  "theme_color": "#3b77c2",
-  "orientation": "portrait",
   "scope": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#764ba2",
+  "orientation": "portrait",
   "description": "Juego educativo para niños: encuentra los pares de banderas de Sudamérica.",
   "lang": "es",
-  "categories": [
-    "education",
-    "games"
+  "dir": "ltr",
+  "id": "/",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ]
 }
